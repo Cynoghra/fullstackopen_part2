@@ -1,24 +1,71 @@
 import { useState } from 'react'
+import Filter from './components/Filter'
+// ei tarvitse Personia tuoda tänne, koska Display hoitaa sen
+import Display from './components/Display'
+import PersonForm from './components/PersonForm'
 
 const App = () => {
+  // Testi aineisto, joka sisältää muutaman henkilön nimen ja puhelinnumeron
   const [persons, setPersons] = useState([
-    { name: 'Arto Hellas' }
-  ]) 
+    { name: 'Arto Hellas', number: '040-123456' },
+    { name: 'Ada Lovelace', number: '39-44-5323523' },
+    { name: 'Dan Abramov', number: '12-43-234345' },
+    { name: 'Mary Poppendieck', number: '39-23-6423122' }
+  ])
+  
+  // Tilat uuden henkilön nimen ja puhelinnumeron tallentamiseen sekä suodattimen hallintaan
   const [newName, setNewName] = useState('')
+  const [newNumber, setNewNumber] = useState('')
+  const [filter, setFilter] = useState('')
+
+  const addPerson = (event) => {
+    event.preventDefault()
+    const personObject = {
+      name: newName,
+      number: newNumber
+    }
+
+    // Tarkistetaan, onko nimi jo listassa some-metodilla
+    if (persons.some(person => person.name === newName)) {
+      alert(`${newName} is already added to phonebook`)
+    } else {
+      setPersons(persons.concat(personObject))
+      setNewName('')
+      setNewNumber('')
+    }
+  }
+
+  const handleNameChange = (event) => {
+    setNewName(event.target.value)
+  }
+
+  const handleNumberChange = (event) => {
+    setNewNumber(event.target.value)
+  }
+
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value)
+  }
+
+  // Suodatetaan henkilöt filterin perusteella
+  const personsToShow = filter === ''
+    ? persons
+    : persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()))
 
   return (
     <div>
       <h2>Phonebook</h2>
-      <form>
-        <div>
-          name: <input />
-        </div>
-        <div>
-          <button type="submit">add</button>
-        </div>
-      </form>
+      <Filter filter={filter} handleFilterChange={handleFilterChange} />
+      <h2>Add a new</h2>
+      <PersonForm
+        addPerson={addPerson}
+        newName={newName}
+        handleNameChange={handleNameChange}
+        newNumber={newNumber}
+        handleNumberChange={handleNumberChange}
+      />
       <h2>Numbers</h2>
-      ...
+      <Display persons={personsToShow} />
     </div>
   )
 
