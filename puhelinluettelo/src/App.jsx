@@ -4,12 +4,19 @@ import Filter from './components/Filter'
 import Display from './components/Display'
 import PersonForm from './components/PersonForm'
 import personService from './services/persons'
+import Notification from './components/Notification'
 
 const App = () => {
   // Testi aineisto, joka sisältää muutaman henkilön nimen ja puhelinnumeron
   // 2.11 muutettu axios hakuun
   // 2.12-2.15 tehty. Synkronointi palvelimelle. Palvelut lisätty services kansioon.
   const [persons, setPersons] = useState([])
+
+  // 2.16
+  const [notificationMessage, setNotificationMessage] = useState(null)
+
+  // 2.17
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     personService
@@ -57,8 +64,28 @@ const App = () => {
               )
             )
 
+            setNotificationMessage(`Updated ${newName}'s number`)
+
+            setTimeout(() => {
+              setNotificationMessage(null)
+            }, 5000)
+
             setNewName('')
             setNewNumber('')
+          })
+          .catch(error => {
+            setErrorMessage(
+              `Information of ${existingPerson.name} has already been removed from server`
+            )
+
+            setTimeout(() => {
+              setErrorMessage(null)
+            }, 5000)
+
+            // päivitetään näkymä poistamalla henkilö, joka on jo poistettu palvelimelta
+            setPersons(
+              persons.filter(person => person.id !== existingPerson.id)
+            )
           })
       }
     } else {
@@ -66,8 +93,21 @@ const App = () => {
         .create(personObject)
         .then(response => {
           setPersons(persons.concat(response.data))
+
+          setNotificationMessage(`Added ${newName}`)
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
+
           setNewName('')
           setNewNumber('')
+        })
+        .catch(error => {
+          setErrorMessage(`Failed to add ${newName}`)
+
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
         })
     }
   }
@@ -77,6 +117,23 @@ const App = () => {
       personService
         .deletePerson(id)
         .then(() => {
+          setPersons(persons.filter(person => person.id !== id))
+
+          setNotificationMessage(`Deleted ${name}`)
+          setTimeout(() => {
+            setNotificationMessage(null)
+          }, 5000)
+        })
+        .catch(error => {
+          setErrorMessage(
+            `Information of ${name} has already been removed from server`
+          )
+
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
+
+          // päivitetään näkymä poistamalla henkilö, joka on jo poistettu palvelimelta
           setPersons(persons.filter(person => person.id !== id))
         })
     }
@@ -102,6 +159,15 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification
+        message={notificationMessage}
+        type="notification"
+      />
+
+      <Notification
+        message={errorMessage}
+        type="error"
+      />
       <Filter filter={filter} handleFilterChange={handleFilterChange} />
       <h2>Add a new</h2>
       <PersonForm
